@@ -59,12 +59,6 @@ def get_company_info(ticker):
     except:
         return {}
 
-with st.sidebar:
-    st.header("User Inputs")
-    ticker_list = load_sp500_tickers()
-    ticker = st.selectbox("Select stock ticker:", ticker_list, index=0)
-    date_range = st.select_slider("Date range:", ['1M', '3M', '6M', '1Y', '5Y'], '6M')
-
 try:
     data = get_historical_data(ticker, date_range)
     company_info = get_company_info(ticker)
