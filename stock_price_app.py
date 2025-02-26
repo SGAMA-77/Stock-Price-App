@@ -28,13 +28,13 @@ with st.sidebar:
         "Select stock ticker:",
         load_sp500_tickers(),
         index=0,
-        key="main_ticker_selector"  # Unique identifier
+        key="main_ticker_selector" 
     )
     date_range = st.select_slider(
         "Select date range:",
         options=['1M', '3M', '6M', '1Y', '5Y'],
         value='6M',
-        key="date_range_slider"  # Unique identifier
+        key="date_range_slider" 
     )
     
 # Fetching stock data using Yahoo Finance API
@@ -95,6 +95,7 @@ fig.add_trace(go.Candlestick(x=data.index,
 
 # Volume chart
 fig.add_trace(go.Bar(x=data.index, y=data['Volume'], name='Volume'), row=2, col=1)
+
 
 # Updating layout 
 fig.update_layout(height=800, title=f"{ticker} Stock Analysis",
