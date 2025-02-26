@@ -39,18 +39,28 @@ with st.sidebar:
 # Fetching stock data using Yahoo Finance API
 @st.cache_data
 def get_stock_data(ticker, period):
-    stock = yf.Ticker(ticker)
-    data = stock.history(period=period)
-    return stock, data
+    period_mapping = {
+        '1M': '1mo',
+        '3M': '3mo',
+        '6M': '6mo',
+        '1Y': '1y',
+        '5Y': '5y'
+    }
+    try:
+        stock = yf.Ticker(ticker)
+        data = stock.history(period=period_mapping.get(period, '6mo'))
+        return stock, data
+    except Exception as e:
+        st.error(f"API Error: {str(e)}")
+        return None, pd.DataFrame()
 
 try:
     stock, data = get_stock_data(ticker, date_range)
     if data.empty:
-        st.error("No data found for this ticker!")
+        st.error(f"No data found for {ticker}! Check Yahoo Finance for valid symbol.")
         st.stop()
-        
-except:
-    st.error("Failed to fetch data. Please check your input!")
+except Exception as e:
+    st.error(f"Application error: {str(e)}")
     st.stop()
     
 # Main dashboard layout
