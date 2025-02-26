@@ -24,21 +24,22 @@ def load_sp500_tickers():
 # Creating a sidebar for user inputs
 with st.sidebar:
     st.header("User Inputs")
-    
     ticker = st.selectbox(
         "Select stock ticker:",
         load_sp500_tickers(),
-        index=0
+        index=0,
+        key="main_ticker_selector"  # Unique identifier
     )
     date_range = st.select_slider(
         "Select date range:",
         options=['1M', '3M', '6M', '1Y', '5Y'],
-        value='6M'
+        value='6M',
+        key="date_range_slider"  # Unique identifier
     )
     
 # Fetching stock data using Yahoo Finance API
 @st.cache_data
-def get_stock_data(ticker, period):
+def get_historical_data(ticker, period):
     period_mapping = {
         '1M': '1mo',
         '3M': '3mo',
@@ -47,17 +48,29 @@ def get_stock_data(ticker, period):
         '5Y': '5y'
     }
     try:
-        stock = yf.Ticker(ticker)
-        data = stock.history(period=period_mapping.get(period, '6mo'))
-        return stock, data
+        return yf.Ticker(ticker).history(period=period_mapping.get(period, '6mo'))
     except Exception as e:
-        st.error(f"API Error: {str(e)}")
-        return None, pd.DataFrame()
+        st.error(f"Data fetch error: {str(e)}")
+        return pd.DataFrame()
+
+def get_company_info(ticker):
+    try:
+        return yf.Ticker(ticker).info
+    except:
+        return {}
+
+with st.sidebar:
+    st.header("User Inputs")
+    ticker_list = load_sp500_tickers()
+    ticker = st.selectbox("Select stock ticker:", ticker_list, index=0)
+    date_range = st.select_slider("Date range:", ['1M', '3M', '6M', '1Y', '5Y'], '6M')
 
 try:
-    stock, data = get_stock_data(ticker, date_range)
+    data = get_historical_data(ticker, date_range)
+    company_info = get_company_info(ticker)
+    
     if data.empty:
-        st.error(f"No data found for {ticker}! Check Yahoo Finance for valid symbol.")
+        st.error(f"No data found for {ticker}!")
         st.stop()
 except Exception as e:
     st.error(f"Application error: {str(e)}")
@@ -68,9 +81,11 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.metric(label="Current Price", value=f"${data['Close'].iloc[-1]:.2f}")
 with col2:
-    st.metric(label="52 Week High", value=f"${stock.info['fiftyTwoWeekHigh']:.2f}")
+    high = company_info.get('fiftyTwoWeekHigh', 'N/A')
+    st.metric(label="52 Week High", value=f"${high:.2f}" if isinstance(high, float) else high)
 with col3:
-    st.metric(label="52 Week Low", value=f"${stock.info['fiftyTwoWeekLow']:.2f}")
+    low = company_info.get('fiftyTwoWeekLow', 'N/A')
+    st.metric(label="52 Week Low", value=f"${low:.2f}" if isinstance(low, float) else low)
 
 # Creating charts that are interactive
 fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
